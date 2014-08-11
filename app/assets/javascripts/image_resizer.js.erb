@@ -76,6 +76,8 @@ Javascript helper for building `image-resizer` url endpoints
     if (uri && urlDomain(uri.hostname) === 'facebook'){
       modArr.push('efacebook');
     }
+    modArr = cdnModArr(uri, modArr);
+    modArr = modArr.sort();
     return modArr.length > 0 ? '/' + modArr.join('-') : '';
   };
 
@@ -103,9 +105,40 @@ Javascript helper for building `image-resizer` url endpoints
     return modArr;
   };
 
+  function cdnModArr(uri, modArr){
+    var modStr, mods, i;
+
+    if (uri && urlDomain(uri.host) === 'cdn'){
+      modStr = uri.path.split('/')[1];
+      if (hasModifierStr(modStr)){
+        mods = modStr.split('-');
+
+        // if no mods are specified then use those from the existing url
+        if (modArr.length === 0){
+          modArr = mods;
+        }
+
+        // if there are mods specified then only add any existing external
+        // source or filter modifiers
+        else {
+          for (i=0; i < mods.length; i++){
+            if (mods[i][0] === 'e' || mods[i][0] === 'f'){
+              modArr.push(mods[i]);
+            }
+          }
+        }
+      }
+    }
+
+    return modArr;
+  };
+
   function buildPath(uri, modifiers){
     if(uri){
       switch(urlDomain(uri.hostname)){
+        case 'cdn':
+          return cdnObject(uri);
+          break
         case 's3':
           return s3Object(uri);
           break;
@@ -125,7 +158,11 @@ Javascript helper for building `image-resizer` url endpoints
   };
 
   function urlDomain(host){
-    var domain = 'other';
+    var domain = 'other',
+        cdnRe = new Regexp(URI(CDN).hostname, 'i');
+    if (cdnRe.test(host)){
+      domain = 'cdn';
+    }
     if (/s3.amazonaws.com/i.test(host)){
       domain = 's3';
     }
@@ -133,6 +170,44 @@ Javascript helper for building `image-resizer` url endpoints
       domain = 'facebook';
     }
     return domain;
+  };
+
+  // Get the path of an already IR'd url, basically make sure we remove the
+  // modifier string if it is present
+  function cdnObject(uri){
+    var parts = uri.pathname.split('/');
+
+    // test to see if there is an existing modifier string in place
+    if (hasModifierStr(parts[1])){
+      return '/' + parts.slice(2).join('/');
+    }
+
+    return uri.pathname;
+  };
+
+  function hasModifierStr(part){
+    var items, i, item, key, value, flag, v;
+
+    items = part.split('-');
+    for (i in items){
+      item = items[i];
+      key = item[0];
+      value = item.slice(1);
+      flag = false;
+      v = modSet(key);
+      if (v){
+        if (v.values){
+          flag = true;
+        } else {
+          flag = 1 * value > 0;
+        }
+      }
+      if (flag){
+        return true;
+      }
+    }
+
+    return false;
   };
 
   function s3Object(uri){
