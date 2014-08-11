@@ -6,7 +6,7 @@ This gem includes helpers to build the appropriate URLs for images served via an
 
 Add this line to your application's Gemfile:
 
-    gem 'ir-helper'
+    gem 'ir_helper'
 
 And then execute:
 
@@ -14,7 +14,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install ir-helper
+    $ gem install ir_helper
 
 ## Configuration
 Configuring this gem is done via:
