@@ -1,0 +1,201 @@
+/**
+Javascript helper for building `image-resizer` url endpoints
+ - this file is partially built via the parent ruby process to include the
+   available modifiers and custom class/method names.
+*/
+(function(root, factory) {
+  'use strict';
+
+  // AMD: import Backbone and underscore into the factory
+  if (typeof define === 'function' && define.amd) {
+    define([], function(){
+      return factory(root);
+    });
+
+  // CommonJS: for Node.js or Browserify
+  } else if (typeof exports !== 'undefined') {
+    module.exports = factory(root);
+
+  // Finally, as a browser global.
+  } else {
+    root.<%= IrHelper.js_class %> = factory(root);
+  }
+
+}(this, function(root){
+  'use strict';
+
+  // Private methods
+  function parseArgs(){
+    var source, modifiers;
+    source = typeof arguments[0] === 'string' ? arguments[0] : null;
+    if (source){
+      modifiers = arguments[1];
+    } else {
+      modifiers = arguments[0];
+    }
+    return { source: source, modifiers: modifiers };
+  };
+
+  function generateEndpoint(source, modifiers){
+    var uri, cdn, mods, path;
+
+    uri  = source ? URI(source) : null;
+    cdn  = IR.CDN.replace(/\/$/, '');
+    mods = modStr(uri, modifiers);
+    path = buildPath(uri, modifiers);
+
+    return cdn + mods + path;
+  };
+
+  function modSet(key){
+    var k, v;
+    for (k in IR.modifiers){
+      v = IR.modifiers[k];
+      if (k === key || v.alias === key){
+        return v;
+      }
+    }
+    return null;
+  };
+
+  function sourceOption(key){
+    var mods = IR.modifiers.e.values
+    for (var k in mods){
+      if (key === mods[k]){
+        return [k, mods[k]];
+      }
+    }
+    return null;
+  };
+
+  function modStr(uri, modifiers){
+    var modArr = [];
+    if (modifiers){
+      modArr = buildModArr(modifiers);
+    }
+    if (uri && urlDomain(uri.hostname) === 'facebook'){
+      modArr.push('efacebook');
+    }
+    return modArr.length > 0 ? '/' + modArr.join('-') : '';
+  };
+
+  function buildModArr(modifiers){
+    var modArr, k, v, mSet, src;
+
+    modArr = [];
+    for (k in modifiers){
+      v = modifiers[k];
+      mSet = modSet(k);
+      src = sourceOption(k);
+      if (mSet){
+        if (mSet.values){
+          if (mSet.values[v]){
+            modArr.push(k + v);
+          }
+        } else {
+          modArr.push(k + v);
+        }
+      } else if (src) {
+        modArr.push('e' + src[0]);
+      }
+    }
+
+    return modArr;
+  };
+
+  function buildPath(uri, modifiers){
+    if(uri){
+      switch(urlDomain(uri.hostname)){
+        case 's3':
+          return s3Object(uri);
+          break;
+        case 'facebook':
+          return fbUid(uri);
+          break;
+        default:
+          ''
+      }
+    } else {
+      for (var k in modifiers){
+        if (sourceOption(k)){
+          return '/' + modifiers[k] + '.jpg';
+        }
+      }
+    }
+  };
+
+  function urlDomain(host){
+    var domain = 'other';
+    if (/s3.amazonaws.com/i.test(host)){
+      domain = 's3';
+    }
+    if (/facebook.com/i.test(host)){
+      domain = 'facebook';
+    }
+    return domain;
+  };
+
+  function s3Object(uri){
+    if (uri.hostname === 's3.amazonaws.com'){
+      return '/' + uri.pathname.split('/').slice(2).join('/');
+    } else {
+      return uri.pathname;
+    }
+  };
+
+  function URI(url){
+    var parser = document.createElement('a');
+    parser.href = url;
+    return parser;
+  };
+
+  function fbUid(uri){
+    return uri.pathname.split('/')[1];
+  };
+
+  function altTag(url){
+    return url.split('/').pop().split('.')[0];
+  };
+
+  function IR(){}
+
+  // Public methods
+  IR.irImageTag = function(){
+    var args = parseArgs.apply(this, arguments),
+        url = generateEndpoint(args.source, args.modifiers),
+        alt = altTag(url);
+
+    return '<img alt="' + alt + '" src="' + url + '" />';
+  };
+
+  IR.irBackground = function(){
+    var args = parseArgs.apply(this, arguments),
+        url = generateEndpoint(args.source, args.modifiers);
+    return 'background-image:url(' + url + ')';
+  };
+
+  IR.irUrl = function(){
+    var args = parseArgs.apply(this, arguments);
+    return generateEndpoint(args.source, args.modifiers);
+  };
+
+  // Public constants
+  IR.modifiers = <%= IrHelper.modifiers.to_json %>;
+
+  IR.CDN = <%= IrHelper.cdn.to_json %>;
+
+  IR.VERSION = <%= IrHelper::VERSION.to_json %>;
+
+  // Alias any methods that have been listed in the config
+  <% unless IrHelper.js_image_tag.nil? %>
+  IR.<%= IrHelper.js_image_tag %> = IR.irImageTag;
+  <% end %>
+  <% unless IrHelper.js_background.nil? %>
+  IR.<%= IrHelper.js_background %> = IR.irBackground;
+  <% end %>
+  <% unless IrHelper.js_url.nil? %>
+  IR.<%= IrHelper.js_url %> = IR.irUrl;
+  <% end %>
+
+  return IR;
+}));
