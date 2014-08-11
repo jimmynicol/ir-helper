@@ -100,6 +100,11 @@ describe 'IrHelper::Helper' do
       it 'should not set an invalid gravity value' do
         expect(subject.ir_url(s3, g: 'else')).to_not eq "#{cdn}/gelse#{s3_obj}"
       end
+      it 'should normalize an alias to the single letter modifier' do
+        expect(subject.ir_url(s3, width: 400)).to eq subject.ir_url(s3, w:400)
+        expect(subject.ir_url(s3, height: 400)).to eq subject.ir_url(s3, h:400)
+        expect(subject.ir_url(s3, square: 40)).to eq subject.ir_url(s3, s:40)
+      end
     end
 
     context 'set external source correctly' do

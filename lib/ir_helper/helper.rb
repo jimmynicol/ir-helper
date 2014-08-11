@@ -51,6 +51,13 @@ module IrHelper
       nil
     end
 
+    def mod_key(key)
+      mods.each do |k, v|
+        return k if key.to_sym == k || v[:alias] == key
+      end
+      nil
+    end
+
     def sources
       mods[:e][:values]
     end
@@ -95,9 +102,9 @@ module IrHelper
         src = source_option(k)
         if mset
           if mset.include? :values
-            mset[:values].include?(v) ? "#{k}#{v}" : nil
+            mset[:values].include?(v) ? "#{mod_key(k)}#{v}" : nil
           else
-            "#{k}#{v}"
+            "#{mod_key(k)}#{v}"
           end
         elsif src
           "e#{src.first}"

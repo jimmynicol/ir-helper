@@ -58,6 +58,17 @@ Javascript helper for building `image-resizer` url endpoints
     return null;
   };
 
+  function modKey(key){
+    var k, v;
+    for (k in IR.modifiers){
+      v = IR.modifiers[k];
+      if (k === key || v.alias === key){
+        return k;
+      }
+    }
+    return null;
+  };
+
   function sourceOption(key){
     var mods = IR.modifiers.e.values
     for (var k in mods){
@@ -92,10 +103,10 @@ Javascript helper for building `image-resizer` url endpoints
       if (mSet){
         if (mSet.values){
           if (mSet.values[v]){
-            modArr.push(k + v);
+            modArr.push(modKey(k) + v);
           }
         } else {
-          modArr.push(k + v);
+          modArr.push(modKey(k) + v);
         }
       } else if (src) {
         modArr.push('e' + src[0]);
