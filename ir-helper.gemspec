@@ -29,4 +29,3 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'awesome_print'
 
 end
-
