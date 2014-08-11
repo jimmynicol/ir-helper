@@ -17,7 +17,7 @@ module IrHelper
       @ir_image_tag = nil
       @ir_background = nil
       @ir_url = nil
-      @js_class = 'ImageResizer'
+      @js_class = 'IR'
       @js_image_tag = nil
       @js_background = nil
       @js_url = nil

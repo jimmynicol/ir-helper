@@ -21,7 +21,7 @@ describe 'IrHelper' do
     end
 
     it 'should set a default for the js_class' do
-      expect(subject.js_class).to eq 'ImageResizer'
+      expect(subject.js_class).to eq 'IR'
     end
 
     it 'should set the js_class' do

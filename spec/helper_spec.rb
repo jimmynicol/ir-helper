@@ -57,7 +57,7 @@ describe 'IrHelper::Helper' do
     end
 
     it 'should detect a Facebook url and set the modifiers correctly' do
-      url = "#{cdn}/s50-efacebook/missnine.jpg"
+      url = "#{cdn}/efacebook-s50/missnine.jpg"
       expect(subject.ir_url(fb_url, s: 50)).to eq url
     end
 
@@ -76,7 +76,7 @@ describe 'IrHelper::Helper' do
       IrHelper.configure do |config|
         config.add_alias :ir_url, :surl
       end
-      url = "#{cdn}/s50-efacebook/missnine.jpg"
+      url = "#{cdn}/efacebook-s50/missnine.jpg"
       expect(subject.ir_url(fb_url, s: 50)).to eq url
       expect(subject.surl(fb_url, s: 50)).to eq url
     end
@@ -119,6 +119,50 @@ describe 'IrHelper::Helper' do
         url = "#{cdn}/evimeo/69445362.jpg"
         expect(subject.ir_url(vimeo_id: '69445362')).to eq url
       end
+    end
+
+    context 'should handle having ir url as source' do
+      let(:ir_url){ subject.ir_url(s3, s:200)}
+      let(:ir_uri){ URI(ir_url) }
+
+      it 'should recognise the cdn domain' do
+        expect(subject.send(:url_domain, ir_uri.host)).to eq :cdn
+      end
+
+      it 'should recognise a modifier string' do
+        part = ir_uri.path.split('/')[1]
+        expect(subject.send(:has_modifier_str, part)).to be true
+      end
+
+      it 'should not recognise a modifier string if none present' do
+        part = URI(subject.ir_url(s3)).path.split('/')[1]
+        expect(subject.send(:has_modifier_str, part)).to be false
+      end
+
+      it 'should return the correct path' do
+        expect(subject.send(:build_path, ir_uri, {})).to eq s3_obj
+      end
+
+      it 'should return new ir_url with modifiers set' do
+        expect(subject.ir_url(ir_url, h:300)).to eq subject.ir_url(s3, h:300)
+      end
+
+      it 'should keep an external mod in place but change the dimension' do
+        fb_url = subject.ir_url fb_uid: 'missnine', h:200
+        fb_url2 = subject.ir_url fb_uid: 'missnine', s:50
+        expect(subject.ir_url(fb_url, s:50)).to eq fb_url2
+      end
+
+      it 'should keep a filter in place but change the dimension' do
+        f_url = subject.ir_url f:'sepia', h:200
+        f_url2 = subject.ir_url f:'sepia', s:50
+        expect(subject.ir_url(f_url, s:50)).to eq f_url2
+      end
+
+      it 'should not alter a mod string when no new modifiers are set' do
+        expect(subject.ir_url(ir_url)).to eq ir_url
+      end
+
     end
 
     context 'returning blank or nil sources' do

@@ -46,7 +46,7 @@ module IrHelper
 
     def mod_set(key)
       mods.each do |k, v|
-        return v if key == k || v[:alias] == key
+        return v if key.to_sym == k || v[:alias] == key
       end
       nil
     end
@@ -84,6 +84,8 @@ module IrHelper
       end
       mod_arr << 'efacebook' if uri && url_domain(uri.host) == :facebook
       mod_arr.compact
+      mod_arr = cdn_mod_arr(uri, mod_arr)
+      mod_arr = mod_arr.sort
       mod_arr.length > 0 ? "/#{mod_arr.join('-')}" : ''
     end
 
@@ -105,9 +107,33 @@ module IrHelper
       end
     end
 
+    def cdn_mod_arr(uri, mod_arr)
+      if uri && url_domain(uri.host) == :cdn
+        mod = uri.path.split('/')[1]
+        if has_modifier_str(mod)
+          mods = mod.split('-')
+          # if no mods are specified then use those from the existing url
+          if mod_arr.length == 0
+            mod_arr = mods
+
+          # if there are mods specified then only add any existing external
+          # source or filter modifiers
+          else
+            mods.each do |m|
+              mod_arr << m if ['e','f'].include?(m[0])
+            end
+          end
+        end
+      end
+
+      mod_arr
+    end
+
     def build_path(uri, modifiers)
       if uri
         case url_domain(uri.host)
+        when :cdn
+          cdn_object uri
         when :s3
           s3_object uri
         when :facebook
@@ -123,9 +149,42 @@ module IrHelper
     end
 
     def url_domain(host)
+      return :cdn if /#{URI(cdn).host}/i =~ host
       return :s3 if /s3.amazonaws.com/i =~ host
       return :facebook if /facebook.com/i =~ host
       :other
+    end
+
+    # Get the path of an already IR'd url, basically make sure we remove the
+    # modifier string if it is present
+    def cdn_object(uri)
+      parts = uri.path.split('/')
+
+      # test to see if there is an existing modifier string in place
+      if has_modifier_str(parts[1])
+        "/#{parts[2..-1].join('/')}"
+      else
+        uri.path
+      end
+    end
+
+    def has_modifier_str(part)
+      part.split('-').each do |item|
+        key = item[0]
+        value = item[1..-1]
+        flag = if v = mod_set(key)
+          if v.include?(:values)
+            v[:values].include?(value)
+          else
+            value.to_i > 0
+          end
+        else
+          false
+        end
+        return true if flag
+      end
+
+      false
     end
 
     def s3_object(uri)
