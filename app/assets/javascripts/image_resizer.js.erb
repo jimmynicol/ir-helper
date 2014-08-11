@@ -109,7 +109,7 @@ Javascript helper for building `image-resizer` url endpoints
     var modStr, mods, i;
 
     if (uri && urlDomain(uri.host) === 'cdn'){
-      modStr = uri.path.split('/')[1];
+      modStr = uri.pathname.split('/')[1];
       if (hasModifierStr(modStr)){
         mods = modStr.split('-');
 
@@ -159,7 +159,7 @@ Javascript helper for building `image-resizer` url endpoints
 
   function urlDomain(host){
     var domain = 'other',
-        cdnRe = new Regexp(URI(CDN).hostname, 'i');
+        cdnRe = new RegExp(URI(IR.CDN).hostname, 'i');
     if (cdnRe.test(host)){
       domain = 'cdn';
     }
