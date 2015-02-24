@@ -4,12 +4,29 @@ module IrHelper
   # Series of view helpers building url strings for image-resizer endpoints
   module Helper
     def ir_image_tag(*args)
-      src = generate_ir_endpoint(args)
+      html_opts = {}
+      [:alt, :style, :id, :class].each do |key|
+        idx = args[0].is_a?(String) || args[0].nil? ? 1 : 0
+        if args[idx].has_key?(key)
+          html_opts[key] = args[idx][key]
+          args[idx].delete key
+        end
+      end
+
+      src = generate_ir_endpoint args
       return nil if src.nil?
+      html_opts[:src] = src
+
       if respond_to?(:image_tag)
-        image_tag src
+        puts html_opts
+
+        image_tag html_opts
       else
-        "<img src='#{src}' />"
+        str = "<img "
+        html_opts.each do |k, v|
+          str << "#{k}='#{v}' "
+        end
+        str << "/>"
       end
     end
 

@@ -182,6 +182,20 @@ describe 'IrHelper::Helper' do
         expect(subject.ir_background('', s:50)).to eq nil
       end
     end
+
+    context 'setting html options on ir_image_tag' do
+      it 'should not fail when html options are set' do
+        expect{ subject.ir_image_tag s3, s: 50, alt: 'something' }.not_to raise_error
+      end
+
+      it 'should build the html options into the string' do
+        tag = subject.ir_image_tag s3, s:50, alt:'Something', id:'one-id', class: 'my-big-class'
+        expect(tag).to include("alt='Something'")
+        expect(tag).to include("id='one-id'")
+        expect(tag).to include("class='my-big-class'")
+      end
+    end
+
   end
 
 end
