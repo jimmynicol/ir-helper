@@ -29,11 +29,11 @@ module IrHelper
     end
 
     def add_modifier(key, img_tag = '', values = [])
-      @modifiers[key.to_sym] = { alias: img_tag, values: values }
+      modifiers[key.to_sym] = { alias: img_tag, values: values }
     end
 
     def add_source(name, option)
-      @modifiers[:e][:values][name.to_sym] = option.to_sym
+      modifiers[:e][:values][name.to_sym] = option.to_sym
     end
 
     def js_class

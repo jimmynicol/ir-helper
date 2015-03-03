@@ -37,7 +37,7 @@ This is a required setting.
 This gem comes with all the available modifiers that are supported natively by `image-resizer` but also allows you add your own modifier strings if you have built custom options into your own implementation.
 
     # config.add_modifier(key, alias='', values=[])
-    config.add_modifiers(:x, :xtra, ['one', 'two'])
+    config.add_modifier(:x, :xtra, ['one', 'two'])
 
 ### Sources
 As with modifiers you can add more external source options. Natively Facebook, Twitter, Youtube and Vimeo are supported but should you chose to add another to that list you can configure the gem with them
